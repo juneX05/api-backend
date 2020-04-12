@@ -14,7 +14,7 @@ return [
     */
 
     'default' => env('DB_CONNECTION', 'pgsql'),
-
+    'fetch' => PDO::FETCH_OBJ,
     /*
     |--------------------------------------------------------------------------
     | Database Connections
