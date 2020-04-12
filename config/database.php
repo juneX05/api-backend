@@ -30,7 +30,7 @@ return [
     | choice installed on your machine before you begin development.
     |
     */
-    $DATABASE_URL = parse_url(getenv("DATABASE_URL"));
+    $DATABASE_URL = parse_url(getenv("DATABASE_URL")),
 
     'connections' => [
 
