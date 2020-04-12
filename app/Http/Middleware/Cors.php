@@ -18,6 +18,7 @@ class Cors
         $allowedOrigins = [
             'http://localhost:3000',
             'http://localhost:8080',
+            'https://hy-sys.herokuapp.com'
         ];
         $requestOrigin = $request->headers->get('origin');
     
