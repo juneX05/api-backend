@@ -18,7 +18,8 @@ class Cors
         $allowedOrigins = [
             'http://localhost:3000',
             'http://localhost:8080',
-            'https://hy-sys.herokuapp.com'
+            'https://hy-sys.herokuapp.com',
+            'https://wilz8.csb.app',
         ];
         $requestOrigin = $request->headers->get('origin');
     
