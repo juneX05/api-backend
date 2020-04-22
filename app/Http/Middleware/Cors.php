@@ -20,6 +20,7 @@ class Cors
             'http://localhost:8080',
             'https://hy-sys.herokuapp.com',
             'https://wilz8.csb.app',
+            'https://15yvk.csb.app',
         ];
         $requestOrigin = $request->headers->get('origin');
     
