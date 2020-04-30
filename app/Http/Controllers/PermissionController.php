@@ -50,19 +50,19 @@ class PermissionController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @param int $id
+     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
      */
     public function show($id)
     {
-        //
+        return PermissionResource::collection(Permission::where('id', $id)->get());
     }
 
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
+     * @param \Illuminate\Http\Request $request
+     * @param Permission $permission
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, Permission $permission)
@@ -76,6 +76,7 @@ class PermissionController extends Controller
 
         $permission->update([
             'name' => $request->name,
+            'description' => $request->description,
         ]);
 
         return response(['message' => 'Permission Updated']);

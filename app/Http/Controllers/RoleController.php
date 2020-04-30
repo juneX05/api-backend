@@ -41,7 +41,8 @@ class RoleController extends Controller
         $request->validate($rules, $params);
 
         $role = $this->role->create([
-            'name' => $request->name
+            'name' => $request->name,
+            'description' => $request->description,
         ]);
 
         if ($request->has('permissions')){
@@ -59,7 +60,7 @@ class RoleController extends Controller
      */
     public function show($id)
     {
-        //
+        return RoleResource::collection(Role::where('id', $id)->get());
     }
 
     /**
@@ -80,6 +81,7 @@ class RoleController extends Controller
 
         $role->update([
             'name' => $request->name,
+            'description' => $request->description,
         ]);
 
         if ($request->has('permissions')){
