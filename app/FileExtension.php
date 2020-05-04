@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class FileExtension extends Model
 {
     protected $fillable = [
-        'file_type', 'extensions'
+        'file_type', 'extension', 'extension_icon'
     ];
 
 
