@@ -25,6 +25,7 @@ Route::middleware('auth:api')->group(function () {
     Route::apiResource('users', 'UserController');
     Route::apiResource('roles', 'RoleController');
     Route::apiResource('permissions', 'PermissionController');
+    Route::apiResource('fileTypes', 'FileTypeController');
     Route::apiResource('files', 'FileController');
     Route::apiResource('file-extensions', 'FileExtensionController');
 });

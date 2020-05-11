@@ -2,17 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\PermissionResource;
+use App\FileType;
+use App\Http\Resources\FileTypeResource;
 use Illuminate\Http\Request;
-use Spatie\Permission\Models\Permission;
 
-class PermissionController extends Controller
+class FileTypeController extends Controller
 {
-    private $permission;
+    private $file_type;
 
-    function __construct(Permission $permission)
+    function __construct(FileType $file_type)
     {
-        $this->permission = $permission;
+        $this->file_type = $file_type;
     }
 
     /**
@@ -22,13 +22,13 @@ class PermissionController extends Controller
      */
     public function index()
     {
-        return PermissionResource::collection(Permission::all());
+        return FileTypeResource::collection(FileType::all());
     }
 
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
@@ -40,11 +40,9 @@ class PermissionController extends Controller
 
         $request->validate($rules, $params);
 
-        $permission = $this->permission->create([
-            'name' => $request->name
-        ]);
+        $file_type = $this->file_type->create($request->all());
 
-        return response(['message' => 'Permission Created']);
+        return response(['message' => 'FileType Created']);
     }
 
     /**
@@ -55,17 +53,17 @@ class PermissionController extends Controller
      */
     public function show($id)
     {
-        return PermissionResource::collection(Permission::where('id', $id)->get());
+        return FileTypeResource::collection(FileType::where('id', $id)->get());
     }
 
     /**
      * Update the specified resource in storage.
      *
      * @param \Illuminate\Http\Request $request
-     * @param Permission $permission
+     * @param FileType $file_type
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Permission $permission)
+    public function update(Request $request, FileType $file_type)
     {
         $rules = [
             'name' => 'required',
@@ -74,22 +72,19 @@ class PermissionController extends Controller
 
         $request->validate($rules, $params);
 
-        $permission->update([
-            'name' => $request->name,
-            'description' => $request->description,
-        ]);
+        $file_type->update($request->all());
 
-        return response(['message' => 'Permission Updated']);
+        return response(['message' => 'FileType Updated']);
     }
 
     /**
      * Remove the specified resource from storage.
      *
-     * @param  int  $id
+     * @param int $id
      * @return int
      */
     public function destroy($id)
     {
-        return $this->permission->destroy($id);
+        return $this->file_type->destroy($id);
     }
 }
