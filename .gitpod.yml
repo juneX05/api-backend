@@ -1,5 +1,5 @@
 tasks:
-  - init: npm install && composer install
-    command: npm run dev
+  - init: composer install && cp /workspace/api-backend/database/database.sqlite.empty /workspace/api-backend/database/database.sqlite && cp /workspace/api-backend/.env.example /workspace/api-backend/.env && php artisan migrate && php artisan passport:install
+    command: php artisan serve
 image:
   file: .gitpod.Dockerfile
