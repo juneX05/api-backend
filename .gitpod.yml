@@ -1,5 +1,8 @@
 tasks:
   - init: composer install
+  - init: cp /workspace/api-backend/database/database.sqlite.empty /workspace/api-backend/database/database.sqlite
+  - init: php artisan migrate && php artisan passport:install
+  - init: cp /workspace/api-backend/.env.example /workspace/api-backend/.env
     command: php artisan serve
 image:
   file: .gitpod.Dockerfile
