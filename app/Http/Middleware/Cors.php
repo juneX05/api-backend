@@ -17,8 +17,8 @@ class Cors
     {
         $allowedOrigins = [
             'http://localhost:3000',
-            'http://localhost:8081',
-            'http://192.168.43.176:8081',
+            'http://localhost:8080',
+            'http://192.168.43.176:8080',
             'https://hy-sys.herokuapp.com',
             'https://wilz8.csb.app',
             'https://15yvk.csb.app',
