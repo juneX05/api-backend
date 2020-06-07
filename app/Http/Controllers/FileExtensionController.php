@@ -35,16 +35,18 @@ class FileExtensionController extends Controller
     public function store(Request $request)
     {
         $rules = [
-            'file_type' => 'required|unique:file_extensions',
-            'extensions' => 'array|min:1'
+            'file_type' => 'required',
+            'extension' => 'required|unique:file_extensions',
+            'icon' => ''
         ];
         $params = [];
 
         $request->validate($rules, $params);
 
         $file_extension = $this->file_extension->create([
-            'file_type' => $request->file_type,
-            'extensions' => json_encode($request->extensions)
+            'file_type_id' => $request->file_type['id'],
+            'extension' => $request->extension,
+            'icon' => $request->icon
         ]);
 
         return response(['message' => 'FileExtension Created']);
@@ -58,7 +60,7 @@ class FileExtensionController extends Controller
      */
     public function show($id)
     {
-        //
+        return FileExtensionResource::collection(FileExtension::where('id', $id)->get());
     }
 
     /**
@@ -68,20 +70,24 @@ class FileExtensionController extends Controller
      * @param FileExtension $file_extension
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, FileExtension $file_extension)
+    public function update(Request $request, $id)
     {
+        $file_extension = FileExtension::findOrFail($id);
         $rules = [
-            'file_type' => ['required',Rule::unique('file_extensions')->ignore($file_extension->id)],
-            'extensions' => 'array|min:1'
+            'file_type' => 'required',
+            'extension' => ['required', Rule::unique('file_extensions')->ignore($file_extension->id)]
         ];
         $params = [];
 
         $request->validate($rules, $params);
 
         $file_extension->update([
-            'file_type' => $request->file_type,
-            'extensions' => json_encode($request->extensions)
+            'file_type_id' => $request->file_type['id'],
+            'extension' => $request->extension,
+            'icon' => $request->icon
         ]);
+
+        return $file_extension;
 
         return response(['message' => 'FileExtensions Updated']);
     }

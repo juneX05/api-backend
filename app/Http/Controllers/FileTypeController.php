@@ -63,8 +63,9 @@ class FileTypeController extends Controller
      * @param FileType $file_type
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, FileType $file_type)
+    public function update(Request $request, $id)
     {
+        $file_type = FileType::findOrFail($id);
         $rules = [
             'name' => 'required',
         ];

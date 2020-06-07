@@ -9,4 +9,9 @@ class FileType extends Model
     protected $fillable = [
         'name', 'description',
     ];
+
+    public function extensions()
+    {
+        return $this->hasMany(FileExtension::class);
+    }
 }
