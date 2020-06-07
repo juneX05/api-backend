@@ -14,7 +14,13 @@ class FileExtensionResource extends Resource
      */
     public function toArray($request)
     {
-        return parent::toArray($request);
+        $default_data = parent::toArray($request);
+
+        $additional_data = [
+            'file_type' => $this->fileType,
+        ];
+
+        return array_merge($default_data, $additional_data);
     }
 
 //    public function getExtensionsAttribute(){
