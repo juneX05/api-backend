@@ -30,7 +30,7 @@ class FileController extends Controller
     }
 
     public function show($id){
-        return FileResource::collection(File::findOrFail($id));
+        return FileResource::collection(File::where('id', $id)->get());
     }
 
     /**
@@ -52,7 +52,7 @@ class FileController extends Controller
      */
     public function update(Request $request,$id)
     {
-        $file = File::where('id', $id)->first();
+        $file = File::with('fileExtension')->where('id', $id)->first();
         $uploaded_file = $this->validateFile($request);
         return response()->json( $this->modifyFile($file,$uploaded_file));
     }
@@ -64,7 +64,7 @@ class FileController extends Controller
      */
     public function destroy($id)
     {
-        $file = File::findOrFail($id);
+        $file = File::with('fileExtension')->findOrFail($id);
 
         return response()->json($this->delete_file($file));
     }

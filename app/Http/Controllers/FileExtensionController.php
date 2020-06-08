@@ -35,8 +35,8 @@ class FileExtensionController extends Controller
     public function store(Request $request)
     {
         $rules = [
-            'file_type' => 'required',
             'extension' => 'required|unique:file_extensions',
+            'mime_type' => 'required|unique:file_extensions',
             'icon' => ''
         ];
         $params = [];
@@ -44,8 +44,8 @@ class FileExtensionController extends Controller
         $request->validate($rules, $params);
 
         $file_extension = $this->file_extension->create([
-            'file_type_id' => $request->file_type['id'],
             'extension' => $request->extension,
+            'mime_type' => $request->mime_type,
             'icon' => $request->icon
         ]);
 
@@ -74,16 +74,16 @@ class FileExtensionController extends Controller
     {
         $file_extension = FileExtension::findOrFail($id);
         $rules = [
-            'file_type' => 'required',
-            'extension' => ['required', Rule::unique('file_extensions')->ignore($file_extension->id)]
+            'extension' => ['required', Rule::unique('file_extensions')->ignore($file_extension->id)],
+            'mime_type' => ['required', Rule::unique('file_extensions')->ignore($file_extension->id)],
         ];
         $params = [];
 
         $request->validate($rules, $params);
 
         $file_extension->update([
-            'file_type_id' => $request->file_type['id'],
             'extension' => $request->extension,
+            'mime_type' => $request->mime_type,
             'icon' => $request->icon
         ]);
 

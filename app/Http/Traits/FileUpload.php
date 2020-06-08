@@ -6,107 +6,122 @@ namespace App\Http\Traits;
 
 use App\File;
 use App\FileExtension;
+use App\FileType;
+use App\Http\Resources\FileExtensionResource;
+use App\Rules\MimeTypes;
 use Auth;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use PhpParser\Node\Stmt\DeclareDeclare;
 
 trait FileUpload
 {
-    protected function getExtensions($checks)
+    public function validateFile($request, $name = 'name', $file_request = 'file', $checks = [], $overwrite = false)
     {
-        $file_extensions = FileExtension::all();
-        $extensions = [];
 
-        if (count($checks) > 0){
-            foreach ($file_extensions as $file_extension){
-                $file_type = Str::lower($file_extension->file_type);
-                if (in_array($file_type, $checks))
-                {
-                    $extensions = array_merge($extensions,json_decode($file_extension->extensions));
-                }
-            }
-        }
-        else{
-            foreach ($file_extensions as $file_extension){
-                $extensions = array_merge($extensions,json_decode($file_extension->extensions));
-            }
-        }
-
-        return $extensions;
-    }
-
-    public function validateFile($request,$name='name',$file_request='file',$checks = [],$overwrite = false){
-        $extensions = $this->getExtensions($checks);
         $max_size = (int)ini_get('upload_max_filesize') * 1000;
-        $all_extensions = implode(',', $extensions);
+
         $rules = [];
 
+        $file_name = $request[$name];
+        $description = $request['description'];
+
         $file = $request->file($file_request);
-
-        if (!$overwrite) {
-            if ($file){
-                $request->merge([$name => $file->getClientOriginalName()]);
-            }
-
-            $rules[$name] = 'required|unique:files';
-        }
+        $file_extension = null;
 
         if ($file) {
-            $rules[$file_request] = 'required|file|mimes:' . $all_extensions . '|max:' . $max_size;
+            $file_name = preg_replace("/\.[^.]+$/", "", $file->getClientOriginalName());
+            $request[$name] = $file_name;
+//            $request->merge([$name => $file_name]);
+
+            $rules[$file_request] = ['required', 'file', 'max:' . $max_size];
+            $file_extension = $this->validateMimeType($file, $checks);
+            if (gettype($file_extension) === 'array') {
+                return $file_extension;
+            }
+        }
+
+        // TODO: CHECK IF FILE REPLACING WILL WORK WITH THIS CODE BELOW
+        if (!$overwrite) {
+            $rules[$name] = 'required|unique:files';
         }
 
         $validator = $this->validate($request, $rules);
 
-        if($validator){
-            return $this->setFileDetails($request,$name,$file_request,$overwrite);
-        }
-        else{
+        if ($validator) {
+            return $this->setFileDetails($file_name, $description, $file, $file_extension, $overwrite);
+        } else {
             return $validator;
         }
     }
 
-    public function setFileDetails($request,$name,$file_request,$overwrite){
-        $file = $request->file($file_request);
+    public function validateMimeType($file, $checks)
+    {
+        $mimeType = $file->getMimeType();
+        $original_file_type = explode("/", $mimeType)[0];
+        $file_extension = FileExtension::where('mime_type', $mimeType)->first();
 
-        if ($file){
-            $extension = $file->getClientOriginalExtension();
-            $type = $this->getType($extension);
+        if ($file_extension) {
+            if ($file->getClientOriginalExtension() === $file_extension->extension) {
+                if (count($checks) > 0) {
+                    if (in_array($original_file_type, $checks)) {
+                        return $file_extension;
+                    }
+
+                    return ['status' => false, 'message' => 'Required file types are.' . implode(" ", $checks)];
+                }
+
+                return $file_extension;
+            }
+
+            return ['status' => false, 'message' => 'File Type mismatch.'];
         }
-        else{
+
+        return ['status' => false, 'message' => 'File Type not supported.'];
+    }
+
+    public function setFileDetails($file_name, $description, $file, $file_extension, $overwrite)
+    {
+        if ($file) {
+            $extension = $file_extension->extension;
+            $extension_id = $file_extension->id;
+            $type = explode("/", $file_extension->mime_type)[0];
+        } else {
+            $extension_id = '';
             $extension = '';
             $type = '';
         }
 
-        if (!$overwrite) {
-            $file_name = $request[$name];
-        }
-        else{
-            $file_name = $request[$name] . '.' .$file->getClientOriginalExtension();
-        }
-
-        return (Object) [
+        return (Object)[
+            'extension_id' => $extension_id,
             'name' => $file_name,
             'original_file' => $file,
-            'description' => $request['description'],
+            'description' => $description,
             'extension' => $extension,
-            'type' => $type,
             'path' => '/public/' . $type . '/',
-            'store_path' => $type. '/' . $file_name,
+            'store_path' => $type . '/' . $file_name . '.' . $extension,
             'overwrite' => $overwrite
         ];
     }
 
-    public function uploadFile($uploaded_file){
-        $model = new File();
-        if ($uploaded_file->overwrite && Storage::disk('local')->exists($uploaded_file->path. '/' .$uploaded_file->name)) {
-            Storage::disk('local')->delete($uploaded_file->path. '/' .$uploaded_file->name);
+    public function uploadFile($uploaded_file)
+    {
+        if (gettype($uploaded_file) === 'array') {
+            return $uploaded_file['message'];
         }
 
-        if (Storage::putFileAs($uploaded_file->path,$uploaded_file->original_file,$uploaded_file->name)) {
+        $model = new File();
+        $full_file_name = $uploaded_file->name . '.' . $uploaded_file->extension;
+        if ($uploaded_file->overwrite && Storage::disk('local')->exists($uploaded_file->path . '/' . $full_file_name)) {
+            Storage::disk('local')->delete($uploaded_file->path . '/' . $full_file_name);
+        }
+
+        if (Storage::putFileAs($uploaded_file->path, $uploaded_file->original_file, $full_file_name)) {
+
             return $model::create([
                 'name' => $uploaded_file->name,
-                'type' => $uploaded_file->type,
-                'extension' => $uploaded_file->extension,
+                'file_extension_id' => $uploaded_file->extension_id,
                 'user_id' => auth()->user()->id,
                 'description' => $uploaded_file->description,
                 'path' => Storage::url($uploaded_file->store_path)
@@ -116,18 +131,19 @@ trait FileUpload
         return false;
     }
 
-    protected function changeFile($file,$uploaded_file){
-        $old_filename = '/public/' . $file->type . '/' . $file->name;
-        $new_filename = '/public/' . $file->type . '/' . $uploaded_file->name;
+    protected function changeFile($file,$uploaded_file)
+    {
+        $type = explode("/", $file->fileExtension->mime_type)[0];
+        $old_filename = '/public/' . $type . '/' . $file->name . '.' . $file->fileExtension->extension;
+        $new_filename = '/public/' . $type . '/' . $uploaded_file->name . '.' . $file->fileExtension->extension;
 
-        if ($uploaded_file->original_file){
-            if (Storage::disk('local')->exists($old_filename)){
+        if ($uploaded_file->original_file) {
+            if (Storage::disk('local')->exists($old_filename)) {
                 Storage::disk('local')->delete($old_filename);
             }
-            return Storage::putFileAs($uploaded_file->path,$uploaded_file->original_file,$uploaded_file->name);
-        }
-        else{
-            if (Storage::disk('local')->exists($old_filename)){
+            return Storage::putFileAs($uploaded_file->path, $uploaded_file->original_file, $uploaded_file->name . $uploaded_file->extension);
+        } else {
+            if (Storage::disk('local')->exists($old_filename)) {
                 return Storage::disk('local')->move($old_filename, $new_filename);
             }
             return false;
@@ -135,6 +151,7 @@ trait FileUpload
     }
 
     protected function updateFileInfo($file,$uploaded_file){
+        $type = explode("/", $file->fileExtension->mime_type)[0];
         $file->name = $uploaded_file->name;
         $file->description = $uploaded_file->description;
 
@@ -143,7 +160,7 @@ trait FileUpload
             $file->path = Storage::url($uploaded_file->store_path);
         }
         else{
-            $file->path = Storage::url($file->type . '/' .$uploaded_file->name);
+            $file->path = Storage::url($type . '/' . $uploaded_file->name . '.' . $file->fileExtension->extension);
         }
 
         return $file->save();
@@ -153,37 +170,18 @@ trait FileUpload
     {
         //$file = File::where('id', $id)->where('user_id', Auth::id())->first();
 
-        $this->changeFile($file,$uploaded_file);
-        return $this->updateFileInfo($file,$uploaded_file);
+        if ($this->changeFile($file, $uploaded_file))
+            return $this->updateFileInfo($file, $uploaded_file);
 
+        return "Error while updating file info";
     }
 
     public function delete_file($file){
-        $file_path = '/public/' . $file->type . '/' . $file->name . '.' . $file->extension;
+        $file_path = str_replace('storage', 'public', $file->path);
 
         if (Storage::disk('local')->exists($file_path)) {
             if (Storage::disk('local')->delete($file_path)) {
                 return $file->delete();
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Get type by extension
-     * @param  string $ext Specific extension
-     * @return string      Type
-     */
-    protected function getType($ext)
-    {
-        $file_extensions = FileExtension::all();
-
-        foreach ($file_extensions as $file_extension){
-            $type = $file_extension->file_type;
-            $extensions = json_decode($file_extension->extensions);
-            if (in_array($ext, $extensions)) {
-                return Str::lower($type);
             }
         }
 
