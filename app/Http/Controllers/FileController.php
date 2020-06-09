@@ -41,25 +41,37 @@ class FileController extends Controller
     public function store(Request $request)
     {
         $uploaded_file = $this->validateFile($request);
-        return response()->json($this->uploadFile($uploaded_file));
+        $upload_status = $this->uploadFile($uploaded_file);
+        if (gettype($upload_status) === 'array' || gettype($upload_status) === 'object') {
+            return response()->json(['message' => 'File Uploaded Successfully']);
+        }
+        return response()->json(['message' => $upload_status], 422);
     }
 
     /**
      * Edit specific file
      * @param  integer  $id      File Id
-     * @param  Request $request  Request with form data: filename
+     * @param Request $request Request with form data: filename
      * @return \Illuminate\Http\JsonResponse
      */
-    public function update(Request $request,$id)
+    public function update(Request $request, $id)
     {
         $file = File::with('fileExtension')->where('id', $id)->first();
         $uploaded_file = $this->validateFile($request);
-        return response()->json( $this->modifyFile($file,$uploaded_file));
+        return response()->json($this->modifyFile($file, $uploaded_file));
+    }
+
+    public function check(Request $request)
+    {
+        if ($file = $request->file('file')) {
+            return $file->getMimeType();
+        }
+        return response()->json(['message' => 'No File uploaded']);
     }
 
     /**
      * Delete file from disk and database
-     * @param  integer $id  File Id
+     * @param integer $id File Id
      * @return \Illuminate\Http\JsonResponse
      */
     public function destroy($id)
