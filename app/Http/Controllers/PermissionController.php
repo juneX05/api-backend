@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\PermissionResource;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Permission;
 
 class PermissionController extends Controller
@@ -33,15 +34,9 @@ class PermissionController extends Controller
      */
     public function store(Request $request)
     {
-        $rules = [
-            'name' => 'required',
-        ];
-        $params = [];
-
-        $request->validate($rules, $params);
-
         $permission = $this->permission->create([
-            'name' => $request->name
+            'name' => $request->name,
+            'description' => $request->description
         ]);
 
         return response(['message' => 'Permission Created']);
@@ -67,13 +62,6 @@ class PermissionController extends Controller
      */
     public function update(Request $request, Permission $permission)
     {
-        $rules = [
-            'name' => 'required',
-        ];
-        $params = [];
-
-        $request->validate($rules, $params);
-
         $permission->update([
             'name' => $request->name,
             'description' => $request->description,
