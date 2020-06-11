@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Permission\PermissionUpdateRequest;
+use App\Http\Requests\Permission\PermissionStoreRequest;
 use App\Http\Resources\PermissionResource;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -29,17 +31,17 @@ class PermissionController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @param PermissionStoreRequest $request
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function store(Request $request)
+    public function store(PermissionStoreRequest $request)
     {
         $permission = $this->permission->create([
             'name' => $request->name,
             'description' => $request->description
         ]);
 
-        return response(['message' => 'Permission Created']);
+        return response()->json(['message' => 'Permission Created']);
     }
 
     /**
@@ -60,7 +62,7 @@ class PermissionController extends Controller
      * @param Permission $permission
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Permission $permission)
+    public function update(PermissionUpdateRequest $request, Permission $permission)
     {
         $permission->update([
             'name' => $request->name,

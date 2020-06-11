@@ -22,7 +22,9 @@ trait FileUpload
 
         $max_size = (int)ini_get('upload_max_filesize') * 1000;
 
-        $rules = [];
+        $rules = [
+            'description' => 'nullable|string|max:255'
+        ];
 
         $file_name = $request[$name];
         $description = $request['description'];
@@ -75,7 +77,7 @@ trait FileUpload
                 return $file_extension;
             }
 
-            return ['status' => false, 'message' => 'File Type mismatch.'];
+            return ['status' => false, 'message' => 'File Extension does not match the File Uploaded.'];
         }
 
         return ['status' => false, 'message' => 'File Type not supported.'];
