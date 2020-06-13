@@ -2,6 +2,8 @@
 
 namespace App;
 
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
+
 class Role extends \Spatie\Permission\Models\Role
 {
 

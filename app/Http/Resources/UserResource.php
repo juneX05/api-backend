@@ -19,7 +19,7 @@ class UserResource extends Resource
         $additional_data = [
             'role' => $this->roles->first(),
             'permissions' => $this->permissions,
-            'image' => $this->file
+            'profile_picture' => $this->file
         ];
 
         return array_merge($default_data,$additional_data);

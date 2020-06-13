@@ -41,11 +41,11 @@ class FileController extends Controller
     public function store(Request $request)
     {
         $uploaded_file = $this->validateFile($request);
-        $upload_status = $this->uploadFile($uploaded_file);
-        if (gettype($upload_status) === 'array' || gettype($upload_status) === 'object') {
-            return response()->json(['message' => 'File Uploaded Successfully']);
+        if (gettype($uploaded_file) === 'array') {
+            return response()->json($uploaded_file['message'], 422);
         }
-        return response()->json(['message' => $upload_status], 422);
+        $upload_status = $this->uploadFile($uploaded_file);
+        return response()->json(['message' => 'File Uploaded Successfully']);
     }
 
     /**
@@ -58,6 +58,9 @@ class FileController extends Controller
     {
         $file = File::with('fileExtension')->where('id', $id)->first();
         $uploaded_file = $this->validateFile($request);
+        if (gettype($uploaded_file) === 'array') {
+            return response()->json($uploaded_file, 422);
+        }
         return response()->json($this->modifyFile($file, $uploaded_file));
     }
 

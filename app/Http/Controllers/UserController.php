@@ -40,7 +40,6 @@ class UserController extends Controller
         $request->merge([
             'role' => json_decode($request->role,true),
             'permissions' => json_decode($request->permissions,true),
-            'profile_picture' => json_decode($request->image)
         ]);
 
         $rules = [
@@ -66,20 +65,29 @@ class UserController extends Controller
             $user->givePermissionTo(collect($request->permissions)->pluck('id')->toArray());
         }
 
-        if ($upload_file !== null){
-            $upload_file = $this->updateProfilePictureInfo($upload_file,$user);
-            $file = $this->process_file($user,$upload_file);
+        if (gettype($upload_file) === 'object') {
+            $upload_file = $this->updateProfilePictureInfo($upload_file, $user);
+            $file = $this->process_file($user, $upload_file);
+        } else if (gettype($upload_file) === 'array') {
+            return response()->json(['message' => $upload_file['message']], 422);
         }
 
         return response(['message' => 'User Created', 'user' => $user]);
     }
 
-    protected function updateProfilePictureInfo($upload_file,$user){
-        $upload_file->name = Str::snake($user->name.'-profile_picture').'.'.$upload_file->extension;
-        $upload_file->description ='This is user '.$user->name.' profile picture';
-        $upload_file->store_path = $upload_file->type. '/' . $upload_file->name;
+    protected function updateProfilePictureInfo($upload_file, $user)
+    {
+        $upload_file->name = Str::snake($user->name . '-profile_picture');
+        $file_name = $upload_file->name . '.' . $upload_file->extension;
+        $upload_file->description = 'This is user ' . $user->name . ' profile picture';
+        $upload_file->store_path = $upload_file->type . '/' . $file_name;
 
         return $upload_file;
+    }
+
+    public function show($id)
+    {
+        return UserResource::collection(User::where('id', $id)->get());
     }
 
     /**
@@ -89,12 +97,13 @@ class UserController extends Controller
      * @param User $user
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, User $user)
+    public function update(Request $request, $id)
     {
+        $user = User::findOrFail($id);
         $upload_file = null;
 
-        if ($request->file('profile_picture')){
-            $upload_file = $this->validateFile($request,'image_name','profile_picture', $checks = ['image'],true);
+        if ($request->file('profile_picture')) {
+            $upload_file = $this->validateFile($request, 'image_name', 'profile_picture', $checks = ['image'], true);
         }
 
         $rules = [
@@ -115,16 +124,16 @@ class UserController extends Controller
             'email' => $request->email,
         ]);
 
-        if ($request->password != null || $request->password !== ''){
-            $request->validate(['password' => 'confirmed'], $params);
+        if (!empty($request->password)) {
+            $request->validate(['password' => 'confirmed|string'], $params);
             $user->update([
                 'password' => bcrypt($request->password)
             ]);
         }
 
-        if ($request->has('role')){
-            $request->merge(['role' => json_decode($request->role,true)]);
-            $user->syncRoles( $request->role['name']);
+        if ($request->has('role')) {
+            $request->merge(['role' => json_decode($request->role, true)]);
+            $user->syncRoles($request->role['name']);
         }
 
         if ($request->has('permissions')){
@@ -132,12 +141,14 @@ class UserController extends Controller
             $user->syncPermissions(collect($request->permissions)->pluck('id')->toArray());
         }
 
-        if ($upload_file !== null){
-            $upload_file = $this->updateProfilePictureInfo($upload_file,$user);
-            $file = $this->process_file($user,$upload_file);
+        if (gettype($upload_file) === 'object') {
+            $upload_file = $this->updateProfilePictureInfo($upload_file, $user);
+            $file = $this->process_file($user, $upload_file);
+        } elseif ($upload_file === 'array') {
+            return response()->json($upload_file, 422);
         }
 
-        return response(['message' => 'User Updated',$user]);
+        return response(['message' => 'User Updated']);
     }
 
     /**
