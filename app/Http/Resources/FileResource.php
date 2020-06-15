@@ -18,6 +18,7 @@ class FileResource extends Resource
 
         $additional_data = [
             'user' => $this->user,
+            'file_extension' => $this->fileExtension
         ];
 
         return array_merge($default_data,$additional_data);

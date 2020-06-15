@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Role\RoleStoreRequest;
+use App\Http\Requests\Role\RoleUpdateRequest;
 use App\Http\Resources\RoleResource;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
@@ -31,21 +33,14 @@ class RoleController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(RoleStoreRequest $request)
     {
-        $rules = [
-            'name' => 'required',
-        ];
-        $params = [];
-
-        $request->validate($rules, $params);
-
         $role = $this->role->create([
             'name' => $request->name,
             'description' => $request->description,
         ]);
 
-        if ($request->has('permissions')){
+        if ($request->has('permissions')) {
             $role->givePermissionTo(collect($request->permissions)->pluck('id')->toArray());
         }
 
@@ -70,21 +65,14 @@ class RoleController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Role $role)
+    public function update(RoleUpdateRequest $request, Role $role)
     {
-        $rules = [
-            'name' => 'required',
-        ];
-        $params = [];
-
-        $request->validate($rules, $params);
-
         $role->update([
             'name' => $request->name,
             'description' => $request->description,
         ]);
 
-        if ($request->has('permissions')){
+        if ($request->has('permissions')) {
             $role->syncPermissions(collect($request->permissions)->pluck('id')->toArray());
         }
 

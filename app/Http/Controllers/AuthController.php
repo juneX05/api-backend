@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\UserResource;
 use App\User;
 use Illuminate\Http\Request;
 use App\Utilities\ProxyRequest;
@@ -73,6 +74,11 @@ class AuthController extends Controller
             'expiresIn' => $resp->expires_in,
             'message' => 'Token has been refreshed.',
         ], 200);
+    }
+
+    public function user(Request $request)
+    {
+        return UserResource::collection(User::where('id', $request->user()->id)->get());
     }
 
     public function logout()

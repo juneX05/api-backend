@@ -17,7 +17,7 @@ class FileExtensionResource extends Resource
         $default_data = parent::toArray($request);
 
         $additional_data = [
-            'file_type' => $this->fileType,
+//            'file_type' => $this->fileType,
         ];
 
         return array_merge($default_data, $additional_data);

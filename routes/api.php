@@ -20,13 +20,15 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware('auth:api')->group(function () {
-    Route::post('logout', 'AuthController@logout')->name('logout');
+    Route::get('/user', 'AuthController@user');
+    Route::post('logout', 'AuthController@logout');
 
     Route::apiResource('users', 'UserController');
+    Route::post('users/remove/profile_picture', 'UserController@removeProfilePicture');
     Route::apiResource('roles', 'RoleController');
     Route::apiResource('permissions', 'PermissionController');
-    Route::apiResource('fileTypes', 'FileTypeController');
     Route::apiResource('files', 'FileController');
+    Route::post('files/check', 'FileController@check');
     Route::apiResource('fileExtensions', 'FileExtensionController');
 });
 

@@ -30,7 +30,7 @@ class FileController extends Controller
     }
 
     public function show($id){
-        return FileResource::collection(File::findOrFail($id));
+        return FileResource::collection(File::where('id', $id)->get());
     }
 
     /**
@@ -41,30 +41,42 @@ class FileController extends Controller
     public function store(Request $request)
     {
         $uploaded_file = $this->validateFile($request);
-        return response()->json($this->uploadFile($uploaded_file));
+        if (gettype($uploaded_file) === 'array') {
+            return response()->json($uploaded_file['message'], 422);
+        }
+        $upload_status = $this->uploadFile($uploaded_file);
+        return response()->json(['message' => 'File Uploaded Successfully']);
     }
 
     /**
-     * Edit specific file
-     * @param  integer  $id      File Id
-     * @param  Request $request  Request with form data: filename
+     * Edit specific file details
+     * @param integer $id File Id
+     * @param Request $request Request with form data: filename
      * @return \Illuminate\Http\JsonResponse
      */
-    public function update(Request $request,$id)
+    public function update(Request $request, $id)
     {
-        $file = File::where('id', $id)->first();
-        $uploaded_file = $this->validateFile($request);
-        return response()->json( $this->modifyFile($file,$uploaded_file));
+        $file = File::with('fileExtension')->where('id', $id)->first();
+        $this->renameFile($file, $request);
+        return response()->json($this->updateFileInfo($file, $request));
+    }
+
+    public function check(Request $request)
+    {
+        if ($file = $request->file('file')) {
+            return $file->getMimeType();
+        }
+        return response()->json(['message' => 'No File uploaded']);
     }
 
     /**
      * Delete file from disk and database
-     * @param  integer $id  File Id
+     * @param integer $id File Id
      * @return \Illuminate\Http\JsonResponse
      */
     public function destroy($id)
     {
-        $file = File::findOrFail($id);
+        $file = File::with('fileExtension')->findOrFail($id);
 
         return response()->json($this->delete_file($file));
     }
