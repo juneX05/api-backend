@@ -24,6 +24,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('logout', 'AuthController@logout');
 
     Route::apiResource('users', 'UserController');
+    Route::post('users/remove/profile_picture', 'UserController@removeProfilePicture');
     Route::apiResource('roles', 'RoleController');
     Route::apiResource('permissions', 'PermissionController');
     Route::apiResource('files', 'FileController');

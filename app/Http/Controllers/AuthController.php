@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\UserResource;
 use App\User;
 use Illuminate\Http\Request;
 use App\Utilities\ProxyRequest;
@@ -77,7 +78,7 @@ class AuthController extends Controller
 
     public function user(Request $request)
     {
-        return response()->json($request->user());
+        return UserResource::collection(User::where('id', $request->user()->id)->get());
     }
 
     public function logout()

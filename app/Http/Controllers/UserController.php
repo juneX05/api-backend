@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\File;
 use App\Http\Traits\FileUpload;
 use App\Http\Resources\UserResource;
 use App\User;
@@ -88,6 +89,22 @@ class UserController extends Controller
     public function show($id)
     {
         return UserResource::collection(User::where('id', $id)->get());
+    }
+
+    public function removeProfilePicture(Request $request)
+    {
+        $user_model = User::findOrFail($request->user_id);
+
+        if ($user_model->file_id === null) {
+            return response()->json(false);
+        } else {
+            $file = File::where(['id' => $user_model->file_id])->get()->first();
+            $this->delete_file($file);
+
+            $user_model->file_id = null;
+            $user_model->save();
+            return UserResource::collection(User::where('id', $request->user_id)->get())->first();
+        }
     }
 
     /**

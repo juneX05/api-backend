@@ -49,19 +49,16 @@ class FileController extends Controller
     }
 
     /**
-     * Edit specific file
-     * @param  integer  $id      File Id
+     * Edit specific file details
+     * @param integer $id File Id
      * @param Request $request Request with form data: filename
      * @return \Illuminate\Http\JsonResponse
      */
     public function update(Request $request, $id)
     {
         $file = File::with('fileExtension')->where('id', $id)->first();
-        $uploaded_file = $this->validateFile($request);
-        if (gettype($uploaded_file) === 'array') {
-            return response()->json($uploaded_file, 422);
-        }
-        return response()->json($this->modifyFile($file, $uploaded_file));
+        $this->renameFile($file, $request);
+        return response()->json($this->updateFileInfo($file, $request));
     }
 
     public function check(Request $request)
