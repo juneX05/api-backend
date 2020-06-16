@@ -187,7 +187,7 @@ class UserController extends Controller
         if (gettype($upload_file) === 'object') {
             $upload_file = $this->updateProfilePictureInfo($upload_file, $user);
             $file = $this->process_file($user, $upload_file);
-        } elseif ($upload_file === 'array') {
+        } elseif (gettype($upload_file) === 'array') {
             return response()->json($upload_file, 422);
         }
 
