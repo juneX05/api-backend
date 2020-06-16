@@ -200,10 +200,13 @@ class UserController extends Controller
      * @param  int  $id
      * @return int
      */
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
+        $is_superadmin_id = $id === 1;
+        $is_self_delete = $request->user()->id === $id;
+        $checker = $is_self_delete || $is_superadmin_id;
         abort_if(
-            \Gate::denies('users_' . 'destroy'),
+            \Gate::denies('users_' . 'destroy') || $checker,
             Response::HTTP_FORBIDDEN,
             '403 Forbidden'
         );
