@@ -97,7 +97,7 @@ class UserController extends Controller
         return $upload_file;
     }
 
-    public function show(Request $request, $id)
+    public function show(Request $request, int $id)
     {
         abort_if(
             \Gate::denies('users_' . 'show') || ($request->user()->id !== 1 && $id === 1),
@@ -135,7 +135,7 @@ class UserController extends Controller
      * @param User $user
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, int $id)
     {
         abort_if(
             \Gate::denies('users_' . 'update') || ($id === 1 && $request->user()->id !== 1),
@@ -200,7 +200,7 @@ class UserController extends Controller
      * @param  int  $id
      * @return int
      */
-    public function destroy(Request $request, $id)
+    public function destroy(Request $request, int $id)
     {
         $is_superadmin_id = $id === 1;
         $is_self_delete = $request->user()->id === $id;
