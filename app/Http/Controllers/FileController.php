@@ -6,8 +6,7 @@ use App\File;
 use App\Http\Traits\FileUpload;
 use App\Http\Resources\FileResource;
 use Illuminate\Http\Request;
-use Auth;
-use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\Response;
 
 class FileController extends Controller
 {
@@ -16,20 +15,35 @@ class FileController extends Controller
 
     /**
      * Fetch files by Type or Id
-     * @param  string $type  File type
-     * @param  integer $id   File Id
      * @return object        Files list, JSON
      */
     public function index()
     {
+        abort_if(
+            \Gate::denies('files_' . 'access'),
+            Response::HTTP_FORBIDDEN,
+            '403 Forbidden'
+        );
         return FileResource::collection(File::all());
     }
 
-    public function userFiles($user_id){
+    public function userFiles($user_id)
+    {
+        abort_if(
+            \Gate::denies('files_' . 'users'),
+            Response::HTTP_FORBIDDEN,
+            '403 Forbidden'
+        );
         return FileResource::collection(File::where('user_id', $user_id)->get());
     }
 
-    public function show($id){
+    public function show($id)
+    {
+        abort_if(
+            \Gate::denies('files_' . 'show'),
+            Response::HTTP_FORBIDDEN,
+            '403 Forbidden'
+        );
         return FileResource::collection(File::where('id', $id)->get());
     }
 
@@ -40,6 +54,11 @@ class FileController extends Controller
      */
     public function store(Request $request)
     {
+        abort_if(
+            \Gate::denies('files_' . 'store'),
+            Response::HTTP_FORBIDDEN,
+            '403 Forbidden'
+        );
         $uploaded_file = $this->validateFile($request);
         if (gettype($uploaded_file) === 'array') {
             return response()->json($uploaded_file['message'], 422);
@@ -56,6 +75,11 @@ class FileController extends Controller
      */
     public function update(Request $request, $id)
     {
+        abort_if(
+            \Gate::denies('files_' . 'update'),
+            Response::HTTP_FORBIDDEN,
+            '403 Forbidden'
+        );
         $file = File::with('fileExtension')->where('id', $id)->first();
         $this->renameFile($file, $request);
         return response()->json($this->updateFileInfo($file, $request));
@@ -63,6 +87,11 @@ class FileController extends Controller
 
     public function check(Request $request)
     {
+        abort_if(
+            \Gate::denies('files_' . 'check_mime'),
+            Response::HTTP_FORBIDDEN,
+            '403 Forbidden'
+        );
         if ($file = $request->file('file')) {
             return $file->getMimeType();
         }
@@ -76,6 +105,11 @@ class FileController extends Controller
      */
     public function destroy($id)
     {
+        abort_if(
+            \Gate::denies('files_' . 'destroy'),
+            Response::HTTP_FORBIDDEN,
+            '403 Forbidden'
+        );
         $file = File::with('fileExtension')->findOrFail($id);
 
         return response()->json($this->delete_file($file));

@@ -9,6 +9,7 @@ use App\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Symfony\Component\HttpFoundation\Response;
 
 class UserController extends Controller
 {
@@ -21,7 +22,12 @@ class UserController extends Controller
      */
     public function index()
     {
-        return UserResource::collection(User::all());
+        abort_if(
+            \Gate::denies('users_' . 'access'),
+            Response::HTTP_FORBIDDEN,
+            '403 Forbidden'
+        );
+        return UserResource::collection(User::where('id', '<>', 1)->get());
     }
 
     /**
@@ -32,15 +38,20 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
+        abort_if(
+            \Gate::denies('users_' . 'store'),
+            Response::HTTP_FORBIDDEN,
+            '403 Forbidden'
+        );
         $upload_file = null;
 
-        if ($request->file('profile_picture')){
-            $upload_file = $this->validateFile($request,'image_name','profile_picture', $checks = ['image'],true);
+        if ($request->file('profile_picture')) {
+            $upload_file = $this->validateFile($request, 'image_name', 'profile_picture', $checks = ['image'], true);
         }
 
         $request->merge([
-            'role' => json_decode($request->role,true),
-            'permissions' => json_decode($request->permissions,true),
+            'role' => json_decode($request->role, true),
+            'permissions' => json_decode($request->permissions, true),
         ]);
 
         $rules = [
@@ -86,13 +97,23 @@ class UserController extends Controller
         return $upload_file;
     }
 
-    public function show($id)
+    public function show(Request $request, $id)
     {
+        abort_if(
+            \Gate::denies('users_' . 'show') || ($request->user()->id !== 1 && $id === 1),
+            Response::HTTP_FORBIDDEN,
+            '403 Forbidden'
+        );
         return UserResource::collection(User::where('id', $id)->get());
     }
 
     public function removeProfilePicture(Request $request)
     {
+        abort_if(
+            \Gate::denies('users_' . 'update') || ($request->user_id === 1 && $request->user()->id !== 1),
+            Response::HTTP_FORBIDDEN,
+            '403 Forbidden'
+        );
         $user_model = User::findOrFail($request->user_id);
 
         if ($user_model->file_id === null) {
@@ -116,6 +137,11 @@ class UserController extends Controller
      */
     public function update(Request $request, $id)
     {
+        abort_if(
+            \Gate::denies('users_' . 'update') || ($id === 1 && $request->user()->id !== 1),
+            Response::HTTP_FORBIDDEN,
+            '403 Forbidden'
+        );
         $user = User::findOrFail($id);
         $upload_file = null;
 
@@ -176,6 +202,11 @@ class UserController extends Controller
      */
     public function destroy($id)
     {
+        abort_if(
+            \Gate::denies('users_' . 'destroy'),
+            Response::HTTP_FORBIDDEN,
+            '403 Forbidden'
+        );
         return User::destroy($id);
     }
 }

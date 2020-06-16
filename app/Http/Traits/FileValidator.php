@@ -3,17 +3,7 @@
 
 namespace App\Http\Traits;
 
-
-use App\File;
 use App\FileExtension;
-use App\FileType;
-use App\Http\Resources\FileExtensionResource;
-use App\Rules\MimeTypes;
-use Auth;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
-use PhpParser\Node\Stmt\DeclareDeclare;
 
 trait FileValidator
 {
