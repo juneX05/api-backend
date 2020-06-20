@@ -8,6 +8,7 @@ use App\Http\Requests\FileExtension\FileExtensionUpdateRequest;
 use App\Http\Resources\FileExtensionResource;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Symfony\Component\HttpFoundation\Response;
 
 class FileExtensionController extends Controller
 {
@@ -25,6 +26,11 @@ class FileExtensionController extends Controller
      */
     public function index()
     {
+        abort_if(
+            \Gate::denies('file_extensions' . '_' . 'access'),
+            Response::HTTP_FORBIDDEN,
+            '403 Forbidden'
+        );
         return FileExtensionResource::collection(FileExtension::all());
     }
 
@@ -36,6 +42,11 @@ class FileExtensionController extends Controller
      */
     public function store(FileExtensionStoreRequest $request)
     {
+        abort_if(
+            \Gate::denies('file_extensions' . '_' . 'store'),
+            Response::HTTP_FORBIDDEN,
+            '403 Forbidden'
+        );
         $file_extension = $this->file_extension->create([
             'extension' => $request->extension,
             'mime_type' => $request->mime_type,
@@ -53,6 +64,11 @@ class FileExtensionController extends Controller
      */
     public function show($id)
     {
+        abort_if(
+            \Gate::denies('file_extensions' . '_' . 'show'),
+            Response::HTTP_FORBIDDEN,
+            '403 Forbidden'
+        );
         return FileExtensionResource::collection(FileExtension::where('id', $id)->get());
     }
 
@@ -65,6 +81,11 @@ class FileExtensionController extends Controller
      */
     public function update(FileExtensionUpdateRequest $request, $id)
     {
+        abort_if(
+            \Gate::denies('file_extensions' . '_' . 'update'),
+            Response::HTTP_FORBIDDEN,
+            '403 Forbidden'
+        );
         $file_extension = FileExtension::findOrFail($id);
 
         $file_extension->update([
@@ -86,6 +107,11 @@ class FileExtensionController extends Controller
      */
     public function destroy($id)
     {
+        abort_if(
+            \Gate::denies('file_extensions' . '_' . 'destroy'),
+            Response::HTTP_FORBIDDEN,
+            '403 Forbidden'
+        );
         return $this->file_extension->destroy($id);
     }
 }

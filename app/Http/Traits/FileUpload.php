@@ -3,7 +3,6 @@
 
 namespace App\Http\Traits;
 
-
 use App\File;
 use Auth;
 use Illuminate\Support\Facades\Storage;

@@ -18,32 +18,6 @@ class AuthController extends Controller
         $this->proxy = $proxy;
     }
 
-    public function register()
-    {
-        $this->validate(request(), [
-            'name' => 'required',
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
-
-        $user = User::create([
-            'name' => request('name'),
-            'email' => request('email'),
-            'password' => bcrypt(request('password')),
-        ]);
-
-        $resp = $this->proxy->grantPasswordToken(
-            $user->email,
-            request('password')
-        );
-
-        return response([
-            'token' => $resp->access_token,
-            'expiresIn' => $resp->expires_in,
-            'message' => 'Your account has been created',
-        ], 201);
-    }
-
     public function login()
     {
         $user = User::where('email', request('email'))->first();
