@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\File;
 use App\FileExtension;
 use App\Http\Requests\FileExtension\FileExtensionStoreRequest;
 use App\Http\Requests\FileExtension\FileExtensionUpdateRequest;
@@ -79,22 +80,21 @@ class FileExtensionController extends Controller
      * @param FileExtension $file_extension
      * @return \Illuminate\Http\Response
      */
-    public function update(FileExtensionUpdateRequest $request, $id)
+    public function update(FileExtensionUpdateRequest $request, FileExtension $fileExtension)
     {
         abort_if(
             \Gate::denies('file_extensions' . '_' . 'update'),
             Response::HTTP_FORBIDDEN,
             '403 Forbidden'
         );
-        $file_extension = FileExtension::findOrFail($id);
 
-        $file_extension->update([
+        $fileExtension->update([
             'extension' => $request->extension,
             'mime_type' => $request->mime_type,
             'icon' => $request->icon
         ]);
 
-        return $file_extension;
+        return $fileExtension;
 
         return response(['message' => 'FileExtensions Updated']);
     }
