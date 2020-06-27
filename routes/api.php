@@ -30,5 +30,10 @@ Route::middleware('auth:api')->group(function () {
     Route::apiResource('files', 'FileController');
     Route::post('files/check', 'FileController@check');
     Route::apiResource('fileExtensions', 'FileExtensionController');
+
+    Route::put('/profile/picture/remove', 'ProfileController@removeProfilePicture');
+    Route::put('/profile/picture/update', 'ProfileController@updateProfilePicture');
+    Route::put('/profile/change/password', 'ProfileController@updatePassword');
+    Route::put('/profile/change/info', 'ProfileController@updateMyInfo');
 });
 

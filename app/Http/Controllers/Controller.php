@@ -6,8 +6,15 @@ use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Str;
 
 class Controller extends BaseController
 {
     use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
+
+    protected function messager($operation, $resource)
+    {
+        return
+            "You don't have the required permission to perform operation " . Str::upper($operation) . " on resource " . Str::upper($resource) . ".\n\nPlease contact your Administrator.";
+    }
 }

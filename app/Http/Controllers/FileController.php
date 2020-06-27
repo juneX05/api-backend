@@ -22,7 +22,7 @@ class FileController extends Controller
         abort_if(
             \Gate::denies('files_' . 'access'),
             Response::HTTP_FORBIDDEN,
-            '403 Forbidden'
+            $this->messager('access', 'files')
         );
         return FileResource::collection(File::all());
     }
@@ -32,19 +32,19 @@ class FileController extends Controller
         abort_if(
             \Gate::denies('files_' . 'users'),
             Response::HTTP_FORBIDDEN,
-            '403 Forbidden'
+            $this->messager("user files", 'files')
         );
         return FileResource::collection(File::where('user_id', $user_id)->get());
     }
 
-    public function show($id)
+    public function show(File $file)
     {
         abort_if(
             \Gate::denies('files_' . 'show'),
             Response::HTTP_FORBIDDEN,
-            '403 Forbidden'
+            $this->messager("show", 'files')
         );
-        return FileResource::collection(File::where('id', $id)->get());
+        return new FileResource($file);
     }
 
     /**
@@ -57,7 +57,7 @@ class FileController extends Controller
         abort_if(
             \Gate::denies('files_' . 'store'),
             Response::HTTP_FORBIDDEN,
-            '403 Forbidden'
+            $this->messager('store', 'files')
         );
         $uploaded_file = $this->validateFile($request);
         if (gettype($uploaded_file) === 'array') {
@@ -73,14 +73,15 @@ class FileController extends Controller
      * @param Request $request Request with form data: filename
      * @return \Illuminate\Http\JsonResponse
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, File $file)
     {
         abort_if(
             \Gate::denies('files_' . 'update'),
             Response::HTTP_FORBIDDEN,
-            '403 Forbidden'
+            $this->messager('update', 'files')
         );
-        $file = File::with('fileExtension')->where('id', $id)->first();
+//        $file = new FileResource($file);
+        $file->fileExtension;
         $this->renameFile($file, $request);
         return response()->json($this->updateFileInfo($file, $request));
     }
@@ -90,7 +91,7 @@ class FileController extends Controller
         abort_if(
             \Gate::denies('files_' . 'check_mime'),
             Response::HTTP_FORBIDDEN,
-            '403 Forbidden'
+            $this->messager('check_mime', 'files')
         );
         if ($file = $request->file('file')) {
             return $file->getMimeType();
@@ -103,14 +104,14 @@ class FileController extends Controller
      * @param integer $id File Id
      * @return \Illuminate\Http\JsonResponse
      */
-    public function destroy($id)
+    public function destroy(File $file)
     {
         abort_if(
             \Gate::denies('files_' . 'destroy'),
             Response::HTTP_FORBIDDEN,
-            '403 Forbidden'
+            $this->messager('destroy', 'files')
         );
-        $file = File::with('fileExtension')->findOrFail($id);
+        $file = new FileResource($file);
 
         return response()->json($this->delete_file($file));
     }
