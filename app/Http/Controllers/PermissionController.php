@@ -12,13 +12,6 @@ use Symfony\Component\HttpFoundation\Response;
 
 class PermissionController extends Controller
 {
-    private $permission;
-
-    function __construct(Permission $permission)
-    {
-        $this->permission = $permission;
-    }
-
     /**
      * Display a listing of the resource.
      *
@@ -29,7 +22,7 @@ class PermissionController extends Controller
         abort_if(
             \Gate::denies('permissions' . '_' . 'access'),
             Response::HTTP_FORBIDDEN,
-            '403 Forbidden'
+            $this->messager('access', 'permissions')
         );
         return PermissionResource::collection(Permission::all());
     }
@@ -45,7 +38,7 @@ class PermissionController extends Controller
         abort_if(
             \Gate::denies('permissions' . '_' . 'store'),
             Response::HTTP_FORBIDDEN,
-            '403 Forbidden'
+            $this->messager('store', 'permissions')
         );
         $permission = $this->permission->create([
             'name' => $request->name,
@@ -61,14 +54,14 @@ class PermissionController extends Controller
      * @param int $id
      * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
      */
-    public function show($id)
+    public function show(Permission $permission)
     {
         abort_if(
             \Gate::denies('permissions' . '_' . 'show'),
             Response::HTTP_FORBIDDEN,
-            '403 Forbidden'
+            $this->messager('show', 'permissions')
         );
-        return PermissionResource::collection(Permission::where('id', $id)->get());
+        return new PermissionResource($permission);
     }
 
     /**
@@ -83,7 +76,7 @@ class PermissionController extends Controller
         abort_if(
             \Gate::denies('permissions' . '_' . 'update'),
             Response::HTTP_FORBIDDEN,
-            '403 Forbidden'
+            $this->messager('update', 'permissions')
         );
         $permission->update([
             'name' => $request->name,
@@ -99,13 +92,13 @@ class PermissionController extends Controller
      * @param  int  $id
      * @return int
      */
-    public function destroy($id)
+    public function destroy(Permission $permission)
     {
         abort_if(
             \Gate::denies('permissions' . '_' . 'destroy'),
             Response::HTTP_FORBIDDEN,
-            '403 Forbidden'
+            $this->messager('destroy', 'permissions')
         );
-        return $this->permission->destroy($id);
+        return $permission->delete();
     }
 }

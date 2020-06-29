@@ -28,7 +28,7 @@ class RoleController extends Controller
         abort_if(
             \Gate::denies('roles' . '_' . 'access'),
             Response::HTTP_FORBIDDEN,
-            '403 Forbidden'
+            $this->messager('access', 'roles')
         );
         return RoleResource::collection(Role::all());
     }
@@ -44,7 +44,7 @@ class RoleController extends Controller
         abort_if(
             \Gate::denies('roles' . '_' . 'store'),
             Response::HTTP_FORBIDDEN,
-            '403 Forbidden'
+            $this->messager('store', 'roles')
         );
         $role = $this->role->create([
             'name' => $request->name,
@@ -64,14 +64,14 @@ class RoleController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(Role $role)
     {
         abort_if(
             \Gate::denies('roles' . '_' . 'show'),
             Response::HTTP_FORBIDDEN,
-            '403 Forbidden'
+            $this->messager('show', 'roles')
         );
-        return RoleResource::collection(Role::where('id', $id)->get());
+        return new RoleResource($role);
     }
 
     /**
@@ -86,7 +86,7 @@ class RoleController extends Controller
         abort_if(
             \Gate::denies('roles' . '_' . 'update'),
             Response::HTTP_FORBIDDEN,
-            '403 Forbidden'
+            $this->messager('update', 'roles')
         );
         $role->update([
             'name' => $request->name,
@@ -106,13 +106,13 @@ class RoleController extends Controller
      * @param  int  $id
      * @return int
      */
-    public function destroy($id)
+    public function destroy(Role $role)
     {
         abort_if(
             \Gate::denies('roles' . '_' . 'destroy'),
             Response::HTTP_FORBIDDEN,
-            '403 Forbidden'
+            $this->messager('destroy', 'roles')
         );
-        return $this->role->destroy($id);
+        return $role->delete();
     }
 }

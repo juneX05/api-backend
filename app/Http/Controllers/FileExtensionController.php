@@ -30,7 +30,7 @@ class FileExtensionController extends Controller
         abort_if(
             \Gate::denies('file_extensions' . '_' . 'access'),
             Response::HTTP_FORBIDDEN,
-            '403 Forbidden'
+            $this->messager('access', 'file extensions')
         );
         return FileExtensionResource::collection(FileExtension::all());
     }
@@ -46,7 +46,7 @@ class FileExtensionController extends Controller
         abort_if(
             \Gate::denies('file_extensions' . '_' . 'store'),
             Response::HTTP_FORBIDDEN,
-            '403 Forbidden'
+            $this->messager('store', 'file extensions')
         );
         $file_extension = $this->file_extension->create([
             'extension' => $request->extension,
@@ -63,14 +63,14 @@ class FileExtensionController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(FileExtension $fileExtension)
     {
         abort_if(
             \Gate::denies('file_extensions' . '_' . 'show'),
             Response::HTTP_FORBIDDEN,
-            '403 Forbidden'
+            $this->messager('show', 'file extensions')
         );
-        return FileExtensionResource::collection(FileExtension::where('id', $id)->get());
+        return new FileExtensionResource($fileExtension);
     }
 
     /**
@@ -85,7 +85,7 @@ class FileExtensionController extends Controller
         abort_if(
             \Gate::denies('file_extensions' . '_' . 'update'),
             Response::HTTP_FORBIDDEN,
-            '403 Forbidden'
+            $this->messager('update', 'file extensions')
         );
 
         $fileExtension->update([
@@ -93,9 +93,6 @@ class FileExtensionController extends Controller
             'mime_type' => $request->mime_type,
             'icon' => $request->icon
         ]);
-
-        return $fileExtension;
-
         return response(['message' => 'FileExtensions Updated']);
     }
 
@@ -105,13 +102,13 @@ class FileExtensionController extends Controller
      * @param  int  $id
      * @return int
      */
-    public function destroy($id)
+    public function destroy(FileExtension $fileExtension)
     {
         abort_if(
             \Gate::denies('file_extensions' . '_' . 'destroy'),
             Response::HTTP_FORBIDDEN,
-            '403 Forbidden'
+            $this->messager('destroy', 'file extensions')
         );
-        return $this->file_extension->destroy($id);
+        return $fileExtension->delete();
     }
 }

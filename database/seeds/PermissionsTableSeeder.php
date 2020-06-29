@@ -19,7 +19,7 @@ class PermissionsTableSeeder extends Seeder
                 'access', 'show', 'update', 'destroy', 'store',
             ];
             $other_permissions = [
-                'files_users', 'files_check_mime',
+                'files_users', 'files_check_mime', 'profile_update'
             ];
             foreach ($modules as $module) {
                 foreach ($accessors as $accessor) {

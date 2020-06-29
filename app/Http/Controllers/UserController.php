@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\File;
 use App\Http\Traits\FileUpload;
 use App\Http\Resources\UserResource;
+use App\Http\Traits\ImageUpdate;
 use App\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -13,7 +13,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class UserController extends Controller
 {
-    use FileUpload;
+    use ImageUpdate;
 
     /**
      * Display a listing of the resource.
@@ -25,7 +25,7 @@ class UserController extends Controller
         abort_if(
             \Gate::denies('users_' . 'access'),
             Response::HTTP_FORBIDDEN,
-            '403 Forbidden'
+            $this->messager('access', 'users')
         );
         return UserResource::collection(User::where('id', '<>', 1)->get());
     }
@@ -41,13 +41,9 @@ class UserController extends Controller
         abort_if(
             \Gate::denies('users_' . 'store'),
             Response::HTTP_FORBIDDEN,
-            '403 Forbidden'
+            $this->messager('store', 'users')
         );
         $upload_file = null;
-
-        if ($request->file('profile_picture')) {
-            $upload_file = $this->validateFile($request, 'image_name', 'profile_picture', $checks = ['image'], true);
-        }
 
         $request->merge([
             'role' => json_decode($request->role, true),
@@ -69,42 +65,27 @@ class UserController extends Controller
             'password' => bcrypt($request->password)
         ]);
 
-        if ($request->has('role') && $request->role !== null){
-            $user->assignRole($request->role['name']);
+        $this->manageRoles($user, $request->role, empty($request->role));
+        $this->managePermissions($user, $request->permissions, empty($request->permissions));
+
+        if ($request->file('profile_picture')) {
+            $upload_status = $this->imageUpdate($user, $request, 'profile_picture', 'User');
+            if (!$upload_status['status']) {
+                return response()->json(['message' => $upload_status['message']], 422);
+            }
         }
 
-        if ($request->has('permissions') && $request['permissions'] !== null){
-            $user->givePermissionTo(collect($request->permissions)->pluck('id')->toArray());
-        }
-
-        if (gettype($upload_file) === 'object') {
-            $upload_file = $this->updateProfilePictureInfo($upload_file, $user);
-            $file = $this->process_file($user, $upload_file);
-        } else if (gettype($upload_file) === 'array') {
-            return response()->json(['message' => $upload_file['message']], 422);
-        }
-
-        return response(['message' => 'User Created', 'user' => $user]);
+        return response(['message' => 'User Created']);
     }
 
-    protected function updateProfilePictureInfo($upload_file, $user)
-    {
-        $upload_file->name = Str::snake($user->name . '-profile_picture');
-        $file_name = $upload_file->name . '.' . $upload_file->extension;
-        $upload_file->description = 'This is user ' . $user->name . ' profile picture';
-        $upload_file->store_path = $upload_file->type . '/' . $file_name;
-
-        return $upload_file;
-    }
-
-    public function show(Request $request, int $id)
+    public function show(Request $request, User $user)
     {
         abort_if(
-            \Gate::denies('users_' . 'show') || ($request->user()->id !== 1 && $id === 1),
+            \Gate::denies('users_' . 'show') || ($request->user()->id !== 1 && $user->id === 1),
             Response::HTTP_FORBIDDEN,
-            '403 Forbidden'
+            $this->messager('show', 'users')
         );
-        return UserResource::collection(User::where('id', $id)->get());
+        return new UserResource($user);
     }
 
     public function removeProfilePicture(Request $request)
@@ -112,20 +93,16 @@ class UserController extends Controller
         abort_if(
             \Gate::denies('users_' . 'update') || ($request->user_id === 1 && $request->user()->id !== 1),
             Response::HTTP_FORBIDDEN,
-            '403 Forbidden'
+            $this->messager('remove profile picture', 'users')
         );
-        $user_model = User::findOrFail($request->user_id);
+        $user = User::findOrFail($request->user_id);
+        $image_removal_status = $this->imageRemoval($request->user_id, $user);
 
-        if ($user_model->file_id === null) {
-            return response()->json(false);
-        } else {
-            $file = File::where(['id' => $user_model->file_id])->get()->first();
-            $this->delete_file($file);
-
-            $user_model->file_id = null;
-            $user_model->save();
-            return UserResource::collection(User::where('id', $request->user_id)->get())->first();
+        if (!$image_removal_status['status']) {
+            return response()->json(['message' => $image_removal_status['message']], 422);
         }
+
+        return response()->json(['message' => 'Profile Picture removed Successully', 'data' => $user]);
     }
 
     /**
@@ -135,19 +112,13 @@ class UserController extends Controller
      * @param User $user
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, int $id)
+    public function update(Request $request, User $user)
     {
         abort_if(
-            \Gate::denies('users_' . 'update') || ($id === 1 && $request->user()->id !== 1),
+            \Gate::denies('users_' . 'update') || ($user->id === 1 && $request->user()->id !== 1),
             Response::HTTP_FORBIDDEN,
-            '403 Forbidden'
+            $this->messager('update', 'users')
         );
-        $user = User::findOrFail($id);
-        $upload_file = null;
-
-        if ($request->file('profile_picture')) {
-            $upload_file = $this->validateFile($request, 'image_name', 'profile_picture', $checks = ['image'], true);
-        }
 
         $rules = [
             'name' => 'required',
@@ -167,6 +138,9 @@ class UserController extends Controller
             'email' => $request->email,
         ]);
 
+        $this->manageRoles($user, $request->role, empty($request->role));
+        $this->managePermissions($user, $request->permissions, empty($request->permissions));
+
         if (!empty($request->password)) {
             $request->validate(['password' => 'confirmed|string'], $params);
             $user->update([
@@ -174,42 +148,46 @@ class UserController extends Controller
             ]);
         }
 
-        if ($request->has('role')) {
-            $request->merge(['role' => json_decode($request->role, true)]);
-            $user->syncRoles($request->role['name']);
-        }
-
-        if ($request->has('permissions')){
-            $request->merge(['permissions' => json_decode($request->permissions,true)]);
-            $user->syncPermissions(collect($request->permissions)->pluck('id')->toArray());
-        }
-
-        if (gettype($upload_file) === 'object') {
-            $upload_file = $this->updateProfilePictureInfo($upload_file, $user);
-            $file = $this->process_file($user, $upload_file);
-        } elseif (gettype($upload_file) === 'array') {
-            return response()->json($upload_file, 422);
+        if ($request->file('profile_picture')) {
+            $upload_status = $this->imageUpdate($user, $request, 'profile_picture', 'User');
+            if (!$upload_status['status']) {
+                return response()->json(['message' => $upload_status['message']], 422);
+            }
         }
 
         return response(['message' => 'User Updated']);
     }
 
+    protected function manageRoles($user, $request_role, $status)
+    {
+        if ($status) return;
+        $role = json_decode($request_role, true);
+        $user->syncRoles($role['name']);
+    }
+
+    protected function managePermissions($user, $request_permissions, $status)
+    {
+        if ($status) return;
+        $permissions = json_decode($request_permissions, true);
+        $user->syncPermissions(collect($permissions)->pluck('id')->toArray());
+    }
+
     /**
      * Remove the specified resource from storage.
      *
-     * @param  int  $id
+     * @param int $id
      * @return int
      */
-    public function destroy(Request $request, int $id)
+    public function destroy(Request $request, User $user)
     {
-        $is_superadmin_id = $id === 1;
-        $is_self_delete = $request->user()->id === $id;
+        $is_superadmin_id = $user->id === 1;
+        $is_self_delete = $request->user()->id === $user->id;
         $checker = $is_self_delete || $is_superadmin_id;
         abort_if(
             \Gate::denies('users_' . 'destroy') || $checker,
             Response::HTTP_FORBIDDEN,
-            '403 Forbidden'
+            $this->messager('destroy', 'users')
         );
-        return User::destroy($id);
+        return $user->delete();
     }
 }
