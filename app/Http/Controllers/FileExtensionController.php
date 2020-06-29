@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\File;
 use App\FileExtension;
 use App\Http\Requests\FileExtension\FileExtensionStoreRequest;
 use App\Http\Requests\FileExtension\FileExtensionUpdateRequest;
@@ -92,7 +93,6 @@ class FileExtensionController extends Controller
             'mime_type' => $request->mime_type,
             'icon' => $request->icon
         ]);
-
         return response(['message' => 'FileExtensions Updated']);
     }
 
